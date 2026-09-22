@@ -1,0 +1,664 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Inter", sans-serif;
+    background: #080a0f;
+    color: #f4f5f7;
+}
+
+button,
+input {
+    font-family: inherit;
+}
+
+button {
+    cursor: pointer;
+}
+
+.app {
+    display: flex;
+    min-height: 100vh;
+}
+
+
+/* ================= SIDEBAR ================= */
+
+.sidebar {
+    width: 250px;
+    background: #0d1016;
+    border-right: 1px solid #20242d;
+    padding: 28px 18px;
+    display: flex;
+    flex-direction: column;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 10px;
+    margin-bottom: 55px;
+}
+
+.logo-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+    background: #e63946;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.logo h2 {
+    font-size: 16px;
+}
+
+.logo span {
+    color: #737985;
+    font-size: 10px;
+}
+
+nav {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.nav-item {
+    border: 0;
+    background: transparent;
+    color: #8c929e;
+    padding: 13px 14px;
+    border-radius: 10px;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+}
+
+.nav-item:hover,
+.nav-item.active {
+    background: #171b23;
+    color: white;
+}
+
+.nav-item span {
+    width: 20px;
+    text-align: center;
+}
+
+.sidebar-bottom {
+    margin-top: auto;
+}
+
+.connection {
+    background: #11151c;
+    border: 1px solid #20242d;
+    border-radius: 12px;
+    padding: 13px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #3ddc84;
+    box-shadow: 0 0 12px #3ddc84;
+}
+
+.connection strong {
+    display: block;
+    font-size: 11px;
+}
+
+.connection small {
+    color: #6e7480;
+    font-size: 10px;
+}
+
+
+/* ================= MAIN ================= */
+
+.main {
+    flex: 1;
+    padding: 35px 45px;
+    max-width: 1500px;
+    margin: auto;
+    width: 100%;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 45px;
+}
+
+.eyebrow,
+.tag {
+    color: #e63946;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+}
+
+header h1 {
+    margin-top: 7px;
+    font-size: 27px;
+}
+
+.system-status {
+    border: 1px solid #26302a;
+    background: #101713;
+    color: #7ee2a5;
+    border-radius: 30px;
+    padding: 9px 15px;
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.system-status span {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background: #3ddc84;
+    border-radius: 50%;
+    margin-right: 7px;
+}
+
+
+/* ================= SECTIONS ================= */
+
+.section {
+    display: none;
+}
+
+.active-section {
+    display: block;
+}
+
+
+/* ================= WELCOME ================= */
+
+.welcome {
+    min-height: 400px;
+    background: linear-gradient(135deg, #11151d, #0d1016);
+    border: 1px solid #20242d;
+    border-radius: 22px;
+    padding: 50px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    overflow: hidden;
+}
+
+.welcome h2 {
+    font-size: 40px;
+    line-height: 1.15;
+    margin: 17px 0;
+}
+
+.welcome p {
+    color: #858b97;
+    max-width: 520px;
+    line-height: 1.7;
+    font-size: 14px;
+}
+
+.actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 30px;
+}
+
+.primary-btn,
+.secondary-btn {
+    border-radius: 10px;
+    padding: 13px 20px;
+    font-weight: 600;
+    font-size: 12px;
+    border: 0;
+}
+
+.primary-btn {
+    background: #e63946;
+    color: white;
+}
+
+.primary-btn:hover {
+    background: #f04b57;
+}
+
+.primary-btn:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+.secondary-btn {
+    background: #1a1e26;
+    border: 1px solid #2a2f39;
+    color: #ddd;
+}
+
+.fingerprint-visual {
+    width: 250px;
+    height: 250px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.scan-ring {
+    width: 190px;
+    height: 190px;
+    border: 1px solid #3a2529;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 70px rgba(230, 57, 70, .08);
+}
+
+.fingerprint {
+    font-size: 70px;
+    color: #e63946;
+}
+
+.scan-line {
+    position: absolute;
+    width: 210px;
+    height: 1px;
+    background: #e63946;
+    opacity: .5;
+    animation: scan 2.5s infinite;
+}
+
+@keyframes scan {
+    0%, 100% {
+        transform: translateY(-85px);
+    }
+
+    50% {
+        transform: translateY(85px);
+    }
+}
+
+
+/* ================= INFO CARDS ================= */
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.info-card {
+    padding: 24px;
+    background: #0d1016;
+    border: 1px solid #20242d;
+    border-radius: 15px;
+}
+
+.info-card span {
+    color: #e63946;
+    font-size: 10px;
+}
+
+.info-card h3 {
+    margin: 12px 0 8px;
+}
+
+.info-card p {
+    color: #777e8b;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+
+/* ================= SECTION HEADING ================= */
+
+.section-heading {
+    margin-bottom: 25px;
+}
+
+.section-heading h2 {
+    font-size: 30px;
+    margin: 8px 0;
+}
+
+.section-heading p {
+    color: #777e8b;
+    font-size: 13px;
+}
+
+
+/* ================= SCANNER ================= */
+
+.scanner-card {
+    background: #0d1016;
+    border: 1px solid #20242d;
+    border-radius: 20px;
+    padding: 55px;
+}
+
+.scanner {
+    text-align: center;
+    max-width: 500px;
+    margin: auto;
+}
+
+.scanner-icon {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    border: 1px solid #3a2529;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: auto auto 25px;
+    color: #e63946;
+    font-size: 45px;
+    box-shadow: 0 0 50px rgba(230, 57, 70, .08);
+}
+
+#scan-status {
+    font-size: 20px;
+    font-weight: 600;
+}
+
+#scan-message {
+    display: block;
+    color: #777e8b;
+    margin: 9px 0 25px;
+}
+
+.scan-btn {
+    min-width: 200px;
+}
+
+
+/* ================= PATIENT ================= */
+
+.patient-result {
+    margin-top: 20px;
+    background: #0d1016;
+    border: 1px solid #20242d;
+    border-radius: 20px;
+    padding: 30px;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.patient-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #20242d;
+    padding-bottom: 25px;
+}
+
+.verified {
+    color: #59d98b;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.patient-header h2 {
+    margin: 8px 0;
+    font-size: 28px;
+}
+
+.patient-header p {
+    color: #777e8b;
+    font-size: 12px;
+}
+
+.blood-group {
+    width: 100px;
+    height: 100px;
+    border-radius: 15px;
+    background: #211216;
+    border: 1px solid #49252b;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.blood-group small {
+    color: #8b6268;
+    font-size: 8px;
+}
+
+.blood-group strong {
+    color: #ff6672;
+    font-size: 30px;
+    margin-top: 5px;
+}
+
+.medical-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.medical-card {
+    padding: 20px;
+    background: #11151c;
+    border: 1px solid #20242d;
+    border-radius: 12px;
+}
+
+.medical-card > span {
+    color: #e63946;
+}
+
+.medical-card small {
+    display: block;
+    color: #6e7480;
+    font-size: 8px;
+    margin: 15px 0 7px;
+}
+
+.medical-card strong {
+    font-size: 12px;
+}
+
+.emergency-contact {
+    margin-top: 15px;
+    padding: 18px;
+    border-radius: 12px;
+    background: #11151c;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.emergency-contact small {
+    display: block;
+    color: #6e7480;
+    font-size: 8px;
+    margin-bottom: 6px;
+}
+
+.emergency-contact button {
+    background: #1b2820;
+    color: #67db94;
+    border: 1px solid #284633;
+    border-radius: 8px;
+    padding: 9px 15px;
+}
+
+
+/* ================= ENROLL ================= */
+
+.enroll-card {
+    max-width: 850px;
+    background: #0d1016;
+    border: 1px solid #20242d;
+    border-radius: 20px;
+    padding: 35px;
+}
+
+.input-group label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 9px;
+}
+
+.input-group input {
+    width: 100%;
+    max-width: 350px;
+    background: #11151c;
+    border: 1px solid #292e38;
+    color: white;
+    padding: 13px;
+    border-radius: 9px;
+    outline: none;
+}
+
+.input-group input:focus {
+    border-color: #e63946;
+}
+
+.input-group small {
+    display: block;
+    color: #626976;
+    font-size: 10px;
+    margin-top: 7px;
+}
+
+.enroll-steps {
+    margin: 35px 0;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+
+.step {
+    padding: 15px;
+    border: 1px solid #20242d;
+    border-radius: 10px;
+}
+
+.step span {
+    color: #e63946;
+    font-size: 10px;
+}
+
+.step strong {
+    display: block;
+    margin: 8px 0 5px;
+    font-size: 11px;
+}
+
+.step small {
+    color: #666d79;
+    font-size: 9px;
+    line-height: 1.5;
+}
+
+.enroll-status {
+    margin-top: 20px;
+    padding: 15px;
+    border-radius: 9px;
+    background: #11151c;
+    color: #8b929e;
+    font-size: 11px;
+}
+
+
+/* ================= MOBILE ================= */
+
+@media (max-width: 900px) {
+
+    .sidebar {
+        width: 70px;
+        padding: 20px 10px;
+    }
+
+    .logo div:not(.logo-icon),
+    .nav-item:not(.active) {
+        display: none;
+    }
+
+    .nav-item {
+        justify-content: center;
+    }
+
+    .main {
+        padding: 25px;
+    }
+
+    .welcome {
+        padding: 30px;
+    }
+
+    .fingerprint-visual {
+        display: none;
+    }
+
+    .medical-grid,
+    .enroll-steps {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+
+@media (max-width: 600px) {
+
+    .sidebar {
+        display: none;
+    }
+
+    .main {
+        padding: 20px;
+    }
+
+    header {
+        margin-bottom: 25px;
+    }
+
+    .system-status {
+        display: none;
+    }
+
+    .welcome h2 {
+        font-size: 30px;
+    }
+
+    .actions {
+        flex-direction: column;
+    }
+
+    .info-grid,
+    .medical-grid,
+    .enroll-steps {
+        grid-template-columns: 1fr;
+    }
+
+    .patient-header {
+        align-items: flex-start;
+        gap: 20px;
+    }
+}

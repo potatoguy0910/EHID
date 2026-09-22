@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emergency Health ID — Biometric Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        black: {
+                            DEFAULT: '#000000',
+                            950: '#050505',
+                            900: '#09090b',
+                            850: '#121215',
+                            800: '#18181b',
+                            700: '#27272a',
+                            600: '#3f3f46'
+                        },
+                        accent: {
+                            teal: '#14b8a6',
+                            red: '#f43f5e',
+                            amber: '#f59e0b'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'Menlo', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { background-color: #050505; color: #f4f4f5; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #09090b; }
+        ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
+        .glow-red { box-shadow: 0 0 25px -5px rgba(244, 63, 94, 0.25); }
+        .glow-teal { box-shadow: 0 0 25px -5px rgba(20, 184, 166, 0.25); }
+        .glow-subtle { box-shadow: 0 0 40px -10px rgba(255, 255, 255, 0.03); }
+    </style>
+</head>
+<body class="font-sans min-h-screen flex flex-col antialiased bg-black-950 text-zinc-100">
+
+    <!-- Navigation Header -->
+    <header class="border-b border-black-800 bg-black-900/90 backdrop-blur-lg sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <!-- Brand Logo -->
+            <div class="flex items-center space-x-3">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-rose-600 to-red-500 flex items-center justify-center text-white shadow-lg glow-red">
+                    <i data-lucide="shield-alert" class="w-5 h-5 stroke-[2.2]"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-base tracking-tight text-white flex items-center gap-2">
+                        EMERGENCY HEALTH ID
+                        <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-black-800 border border-black-700 text-rose-400">SERVER CONNECTED</span>
+                    </h1>
+                    <p class="text-[11px] text-zinc-500 font-mono">ESP32 Biometric Dispatch Hub</p>
+                </div>
+            </div>
+
+            <!-- Backend Connection Manager Controls -->
+            <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2 bg-black-850 border border-black-800 rounded-xl px-3 py-1.5 text-xs font-mono">
+                    <span id="connPulse" class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
+                    <input type="text" id="serverUrlInput" value="http://localhost:5000" class="bg-transparent text-zinc-300 focus:outline-none w-36 text-xs" placeholder="http://localhost:5000">
+                    <button onclick="testServerConnection()" class="text-zinc-400 hover:text-white transition-colors" title="Check Connection">
+                        <i data-lucide="refresh-cw" id="syncIcon" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
+                <button onclick="toggleBackendCodeModal()" class="px-3 py-1.5 bg-black-800 hover:bg-black-700 border border-black-700 text-xs font-medium rounded-xl text-zinc-300 transition-all flex items-center gap-1.5">
+                    <i data-lucide="code" class="w-3.5 h-3.5 text-rose-400"></i>
+                    <span class="hidden sm:inline">Python Server Script</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs Bar -->
+    <div class="bg-black-900 border-b border-black-800 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto flex space-x-2 py-2 overflow-x-auto">
+            <button onclick="switchTab('scanTab')" id="tab-scanTab" class="nav-tab active flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all bg-rose-500/10 text-rose-400 border border-rose-500/30">
+                <i data-lucide="fingerprint" class="w-4 h-4"></i> Live Scanner & Record
+            </button>
+            <button onclick="switchTab('enrollTab')" id="tab-enrollTab" class="nav-tab flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-zinc-400 hover:text-zinc-200 hover:bg-black-800 border border-transparent">
+                <i data-lucide="user-plus" class="w-4 h-4"></i> Enroll Fingerprint
+            </button>
+            <button onclick="switchTab('databaseTab')" id="tab-databaseTab" class="nav-tab flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-zinc-400 hover:text-zinc-200 hover:bg-black-800 border border-transparent">
+                <i data-lucide="database" class="w-4 h-4"></i> Patient Records
+            </button>
+            <button onclick="switchTab('logsTab')" id="tab-logsTab" class="nav-tab flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-zinc-400 hover:text-zinc-200 hover:bg-black-800 border border-transparent">
+                <i data-lucide="terminal" class="w-4 h-4"></i> ESP32 Serial Logs
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content Workspace -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+
+        <!-- TAB 1: LIVE SCANNER PANEL -->
+        <section id="scanTab" class="tab-content space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+                <!-- Fingerprint Trigger Panel -->
+                <div class="lg:col-span-5 flex flex-col gap-6">
+                    <div class="bg-black-900 border border-black-800 rounded-3xl p-6 flex flex-col items-center justify-center text-center min-h-[380px] relative glow-subtle">
+                        <div class="absolute top-4 left-4">
+                            <span id="scanStatusBadge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-mono bg-black-850 text-zinc-400 border border-black-700">
+                                <span class="w-2 h-2 rounded-full bg-zinc-600"></span> IDLE
+                            </span>
+                        </div>
+
+                        <!-- Scanner Interactive Visualizer -->
+                        <div class="relative my-8 group">
+                            <div id="radarRing" class="absolute -inset-4 rounded-full bg-rose-500/5 border border-rose-500/10 transition-all duration-500 opacity-30"></div>
+                            <div id="scannerTarget" class="relative w-44 h-44 rounded-full bg-black border-2 border-black-700 flex items-center justify-center overflow-hidden transition-all shadow-inner">
+                                <div id="scanLaser" class="hidden absolute w-full h-1 bg-gradient-to-r from-transparent via-rose-500 to-transparent shadow-[0_0_15px_#f43f5e] z-20 animate-pulse"></div>
+                                <i data-lucide="fingerprint" id="fingerGraphic" class="w-28 h-28 text-black-700 transition-all duration-500"></i>
+                            </div>
+                        </div>
+
+                        <button id="scanBtn" onclick="triggerHardwareScan()" class="w-full max-w-xs py-3.5 px-6 rounded-2xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white font-bold text-sm shadow-lg glow-red transition-all active:scale-95 flex items-center justify-center gap-2">
+                            <i data-lucide="scan" class="w-4 h-4"></i>
+                            <span>Scan Fingerprint</span>
+                        </button>
+                        <p class="text-[11px] text-zinc-500 mt-3 font-mono">Dispatches command to Python PySerial driver</p>
+                    </div>
+
+                    <!-- Scan History Log -->
+                    <div class="bg-black-900 border border-black-800 rounded-3xl p-5 flex-1 flex flex-col">
+                        <h3 class="text-xs font-mono font-semibold text-zinc-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                            <i data-lucide="clock" class="w-3.5 h-3.5 text-rose-500"></i> Recent Scan Events
+                        </h3>
+                        <div id="scanHistoryList" class="space-y-2 text-xs text-zinc-500 font-mono max-h-40 overflow-y-auto pr-1">
+                            <div class="py-4 text-center italic text-zinc-600">Awaiting scan commands...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Patient Medical Card Display -->
+                <div class="lg:col-span-7">
+                    <div class="bg-black-900 border border-black-800 rounded-3xl p-6 sm:p-8 min-h-[500px] flex flex-col justify-between relative shadow-2xl">
+                        
+                        <!-- Empty Placeholder State -->
+                        <div id="patientPlaceholder" class="flex flex-col items-center justify-center text-center my-auto py-20 space-y-3">
+                            <div class="p-4 bg-black-850 rounded-2xl border border-black-800 text-zinc-600">
+                                <i data-lucide="shield-alert" class="w-10 h-10 stroke-[1.5]"></i>
+                            </div>
+                            <h3 class="text-zinc-300 font-semibold text-base">No Medical Record Loaded</h3>
+                            <p class="text-zinc-500 text-xs max-w-xs">Trigger a scan or query the server to fetch biometric patient data.</p>
+                        </div>
+
+                        <!-- Active Patient Record View -->
+                        <div id="patientDataView" class="hidden space-y-6">
+                            <!-- Patient Header -->
+                            <div class="flex flex-wrap items-start justify-between gap-4 border-b border-black-800 pb-5">
+                                <div class="space-y-1">
+                                    <div class="flex items-center gap-2">
+                                        <span id="pIdBadge" class="font-mono text-xs px-2.5 py-0.5 rounded-full bg-black-800 border border-black-700 text-rose-400 font-semibold">ID #1</span>
+                                        <span class="text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full font-medium flex items-center gap-1">
+                                            <i data-lucide="check-circle" class="w-3 h-3"></i> Biometric Verified
+                                        </span>
+                                    </div>
+                                    <h2 id="pName" class="text-2xl sm:text-3xl font-bold text-white tracking-tight">--</h2>
+                                    <p class="text-xs text-zinc-400 font-mono">Age: <span id="pAge" class="text-zinc-200">--</span> yrs</p>
+                                </div>
+
+                                <div class="bg-black-850 border border-rose-900/40 rounded-2xl p-4 text-center min-w-[100px] shadow-lg">
+                                    <span class="text-[10px] font-bold text-rose-500 tracking-wider uppercase block font-mono">Blood Group</span>
+                                    <span id="pBloodGroup" class="text-3xl font-extrabold text-white tracking-tight">--</span>
+                                </div>
+                            </div>
+
+                            <!-- Allergies Alert Box -->
+                            <div class="bg-rose-950/20 border border-rose-900/30 rounded-2xl p-4 space-y-1">
+                                <span class="text-xs font-bold text-rose-400 uppercase tracking-wider flex items-center gap-1.5 font-mono">
+                                    <i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-rose-500"></i> Critical Allergies
+                                </span>
+                                <p id="pAllergies" class="text-sm font-semibold text-rose-200">--</p>
+                            </div>
+
+                            <!-- Details Grid -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div class="bg-black-950 border border-black-800 p-4 rounded-2xl space-y-1">
+                                    <span class="text-xs text-zinc-500 font-mono block">Medical Conditions</span>
+                                    <p id="pConditions" class="text-sm font-medium text-zinc-200">--</p>
+                                </div>
+                                <div class="bg-black-950 border border-black-800 p-4 rounded-2xl space-y-1">
+                                    <span class="text-xs text-zinc-500 font-mono block">Medications</span>
+                                    <p id="pMedications" class="text-sm font-medium text-zinc-200">--</p>
+                                </div>
+                                <div class="bg-black-950 border border-black-800 p-4 rounded-2xl space-y-1 sm:col-span-2">
+                                    <span class="text-xs text-zinc-500 font-mono block">Surgeries & History</span>
+                                    <p id="pSurgeries" class="text-sm font-medium text-zinc-200">--</p>
+                                </div>
+                            </div>
+
+                            <!-- Dispatch Contact Bar -->
+                            <div class="pt-3 border-t border-black-800 flex flex-col sm:flex-row items-center justify-between gap-3">
+                                <div>
+                                    <span class="text-[10px] text-zinc-500 uppercase font-mono block">Emergency Contact</span>
+                                    <span id="pContact" class="text-base font-bold text-zinc-100 font-mono">--</span>
+                                </div>
+                                <a id="pCallBtn" href="#" class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs transition-all shadow-md flex items-center justify-center gap-2">
+                                    <i data-lucide="phone-call" class="w-3.5 h-3.5"></i> Call Emergency Dispatch
+                                </a>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: ENROLLMENT PANEL -->
+        <section id="enrollTab" class="tab-content hidden space-y-6">
+            <div class="max-w-2xl mx-auto bg-black-900 border border-black-800 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
+                <div class="border-b border-black-800 pb-5">
+                    <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                        <i data-lucide="user-plus" class="w-5 h-5 text-rose-500"></i> Fingerprint Enrollment Wizard
+                    </h2>
+                    <p class="text-xs text-zinc-500 mt-1">Registers new fingerprint template in ESP32 memory slot and saves record to server.</p>
+                </div>
+
+                <form onsubmit="submitEnrollment(event)" class="space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-mono text-zinc-400 mb-1">Fingerprint Slot ID (1-127)*</label>
+                            <input type="number" id="enrollId" min="1" max="127" required placeholder="e.g. 3" class="w-full bg-black-950 border border-black-800 rounded-xl px-3.5 py-2 text-sm text-zinc-100 focus:outline-none focus:border-rose-500 font-mono">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-mono text-zinc-400 mb-1">Blood Group*</label>
+                            <select id="enrollBlood" required class="w-full bg-black-950 border border-black-800 rounded-xl px-3.5 py-2 text-sm text-zinc-100 focus:outline-none focus:border-rose-500">
+                                <option value="A+">A+</option>
+                                <option value="A-">A-</option>
+                                <option value="B+">B+</option>
+                                <option value="B-">B-</option>
+                                <option value="O+">O+</option>
+                                <option value="O-">O-</option>
+                                <option value="AB+">AB+</option>
+                                <option value="AB-">AB-</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-mono text-zinc-400 mb-1">Full Name*</label>
+                            <input type="text" id="enrollName" required placeholder="Patient Full Name" class="w-full bg-black-950 border border-black-800 rounded-xl px-3.5 py-2 text-sm text-zinc-100 focus:outline-none focus:border-rose-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-mono text-zinc-400 mb-1">Age*</label>
+                            <input type="number" id="enrollAge" required placeholder="Age" class="w-full bg-black-950 border border-black-800 rounded-xl px-3.5 py-2 text-sm text-zinc-100 focus:outline-none focus:border-rose-500">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-mono text-zinc-400 mb-1">Allergies</label>
+                        <input type="text" id="enrollAllergies" placeholder="e.g. Penicillin, Peanuts, None" class="w-full bg-black-950 border border-black-800 rounded-xl px-3.5 py-2 text-sm text-zinc-100 focus:outline-none focus:border-rose-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-mono text-zinc-400 mb-1">Medical Conditions</label>
+                        <input type="text" id="enrollConditions" placeholder="e.g. Diabetes, Asthma" class="w-full bg-black-950 border border-black-800 rounded-xl px-3.5 py-2 text-sm text-zinc-100 focus:outline-none focus:border-rose-500">
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-mono text-zinc-400 mb-1">Surgeries & History</label>
+                            <input type="text" id="enrollSurgeries" placeholder="Surgeries" class="w-full bg-black-950 border border-black-800 rounded-xl px-3.5 py-2 text-sm text-zinc-100 focus:outline-none focus:border-rose-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-mono text-zinc-400 mb-1">Medications</label>
+                            <input type="text" id="enrollMedications" placeholder="Current medications" class="w-full bg-black-950 border border-black-800 rounded-xl px-3.5 py-2 text-sm text-zinc-100 focus:outline-none focus:border-rose-500">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-mono text-zinc-400 mb-1">Emergency Contact Number*</label>
+                        <input type="text" id="enrollContact" required placeholder="+91 XXXXX XXXXX" class="w-full bg-black-950 border border-black-800 rounded-xl px-3.5 py-2 text-sm text-zinc-100 focus:outline-none focus:border-rose-500 font-mono">
+                    </div>
+
+                    <button type="submit" id="enrollBtn" class="w-full py-3.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-2xl text-xs transition-all shadow-lg glow-red flex items-center justify-center gap-2">
+                        <i data-lucide="fingerprint" class="w-4 h-4"></i> Send Enrollment Command to ESP32
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- TAB 3: PATIENT DATABASE PANEL -->
+        <section id="databaseTab" class="tab-content hidden space-y-6">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-black-900 p-4 border border-black-800 rounded-2xl">
+                <div class="relative w-full sm:w-80">
+                    <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500"></i>
+                    <input type="text" id="searchBox" onkeyup="filterRecords()" placeholder="Search patient name, condition, or ID..." class="w-full bg-black-950 border border-black-800 rounded-xl pl-10 pr-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-rose-500">
+                </div>
+                <button onclick="fetchPatientsList()" class="px-3.5 py-2 bg-black-800 hover:bg-black-700 text-zinc-300 text-xs font-mono rounded-xl border border-black-700 flex items-center gap-1.5">
+                    <i data-lucide="rotate-cw" class="w-3.5 h-3.5"></i> Refresh Server Records
+                </button>
+            </div>
+
+            <div class="bg-black-900 border border-black-800 rounded-3xl overflow-hidden shadow-2xl">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs text-zinc-300 font-sans">
+                        <thead class="bg-black-950 text-zinc-500 font-mono uppercase border-b border-black-800">
+                            <tr>
+                                <th class="px-6 py-3.5">ID</th>
+                                <th class="px-6 py-3.5">Name</th>
+                                <th class="px-6 py-3.5">Blood</th>
+                                <th class="px-6 py-3.5">Allergies</th>
+                                <th class="px-6 py-3.5">Conditions</th>
+                                <th class="px-6 py-3.5">Emergency Contact</th>
+                                <th class="px-6 py-3.5 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="patientTableBody" class="divide-y divide-black-800">
+                            <!-- Injected dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: SERIAL LOGS PANEL -->
+        <section id="logsTab" class="tab-content hidden space-y-4">
+            <div class="bg-black-900 border border-black-800 rounded-3xl p-5 shadow-2xl flex flex-col h-[550px]">
+                <div class="flex items-center justify-between pb-3 border-b border-black-800">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span>
+                        <span class="text-xs font-mono text-zinc-400">PySerial ESP32 Output Log</span>
+                    </div>
+                    <button onclick="clearConsole()" class="px-3 py-1 bg-black-800 hover:bg-black-700 text-zinc-400 rounded-lg text-xs font-mono">Clear</button>
+                </div>
+                <div id="consoleLog" class="flex-1 bg-black-950 p-4 rounded-2xl my-3 font-mono text-xs overflow-y-auto space-y-1.5 border border-black-850">
+                    <div class="text-zinc-600">// Live serial logs from Python Flask backend...</div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Python Companion Code Modal -->
+    <div id="codeModal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-black-900 border border-black-800 rounded-3xl p-6 max-w-3xl w-full shadow-2xl space-y-4 flex flex-col max-h-[85vh]">
+            <div class="flex items-center justify-between border-b border-black-800 pb-3">
+                <h3 class="text-sm font-bold font-mono text-white flex items-center gap-2">
+                    <i data-lucide="file-code" class="w-4 h-4 text-rose-500"></i> Python Flask Server Bridge (server.py)
+                </h3>
+                <button onclick="toggleBackendCodeModal()" class="text-zinc-500 hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <p class="text-xs text-zinc-400">Run this Python script on your PC connected to the ESP32 via USB serial COM port:</p>
+            
+            <div class="relative flex-1 overflow-hidden bg-black-950 rounded-2xl border border-black-850 p-4">
+                <pre class="font-mono text-xs text-rose-300/90 overflow-auto h-full selection:bg-rose-900"><code id="pythonSourceCode"># Install dependencies: pip install flask flask-cors pyserial
+from flask import Flask, jsonify, request
+from flask_cors import CORS
+import serial
+import time
+
+app = Flask(__name__)
+CORS(app) # Enable CORS for Dashboard
+
+PORT = "COM5" # Change to your ESP32 serial port
+BAUD = 115200
+
+patients = {
+    1: {
+        "name": "Aarav Patel",
+        "age": 24,
+        "blood_group": "B+",
+        "allergies": "Penicillin",
+        "conditions": "Asthma",
+        "surgeries": "Appendectomy - 2024",
+        "medications": "Salbutamol",
+        "emergency_contact": "+91 XXXXX XXXXX"
+    },
+    2: {
+        "name": "Rohan Shah",
+        "age": 31,
+        "blood_group": "O+",
+        "allergies": "None",
+        "conditions": "Diabetes",
+        "surgeries": "None",
+        "medications": "Metformin",
+        "emergency_contact": "+91 XXXXX XXXXX"
+    }
+}
+
+try:
+    esp32 = serial.Serial(PORT, BAUD, timeout=1)
+    esp32.dtr = False
+    esp32.rts = False
+    time.sleep(2)
+    esp32.reset_input_buffer()
+    print("ESP32 Connected on", PORT)
+except Exception as e:
+    print("Serial Connection Error:", e)
+    esp32 = None
+
+@app.route('/api/status', methods=['GET'])
+def status():
+    return jsonify({"status": "online", "serial_connected": esp32 is not None})
+
+@app.route('/api/patients', methods=['GET'])
+def get_patients():
+    return jsonify(patients)
+
+@app.route('/api/scan', methods=['POST'])
+def scan():
+    if not esp32:
+        return jsonify({"error": "ESP32 not connected"}), 500
+    
+    esp32.write(b"SCAN\n")
+    start_time = time.time()
+    
+    while time.time() - start_time < 10:
+        line = esp32.readline().decode('utf-8', errors='ignore').strip()
+        if line.startswith("FINGERPRINT_ID:"):
+            fid = int(line.split(":")[1])
+            patient = patients.get(fid, None)
+            return jsonify({"status": "found", "id": fid, "patient": patient})
+        elif line == "NO_MATCH":
+            return jsonify({"status": "no_match"}), 404
+            
+    return jsonify({"status": "timeout"}), 408
+
+@app.route('/api/enroll', methods=['POST'])
+def enroll():
+    data = request.json
+    fid = data.get('id')
+    if not fid or not esp32:
+        return jsonify({"error": "Invalid request"}), 400
+        
+    esp32.write(f"ENROLL:{fid}\n".encode())
+    start_time = time.time()
+    
+    while time.time() - start_time < 15:
+        line = esp32.readline().decode('utf-8', errors='ignore').strip()
+        if line == "ENROLL_SUCCESS":
+            patients[fid] = data.get('patient', {})
+            return jsonify({"status": "success", "id": fid})
+        elif line == "ENROLL_FAILED":
+            return jsonify({"status": "failed"}), 400
+            
+    return jsonify({"status": "timeout"}), 408
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=True)</code></pre>
+            </div>
+
+            <button onclick="copyPythonCode()" class="w-full py-2.5 bg-black-800 hover:bg-black-700 text-zinc-200 text-xs font-mono font-semibold rounded-xl border border-black-700 transition-all flex items-center justify-center gap-2">
+                <i data-lucide="copy" class="w-4 h-4"></i> Copy Python Script
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Local Cache for Patient Database
+        let patientDatabase = {};
+
+        window.onload = function() {
+            lucide.createIcons();
+            testServerConnection();
+            fetchPatientsList();
+        };
+
+        function getBackendUrl() {
+            return document.getElementById('serverUrlInput').value.replace(/\/$/, '');
+        }
+
+        // Test Python Server Connection
+        async function testServerConnection() {
+            const syncIcon = document.getElementById('syncIcon');
+            const pulse = document.getElementById('connPulse');
+            syncIcon.classList.add('animate-spin');
+
+            try {
+                const res = await fetch(`${getBackendUrl()}/api/status`);
+                if (res.ok) {
+                    pulse.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_10px_#10b981]";
+                    logConsole("Connected to Python backend server.", "success");
+                } else {
+                    throw new Error("Bad status");
+                }
+            } catch (err) {
+                pulse.className = "w-2.5 h-2.5 rounded-full bg-rose-500 shadow-[0_0_10px_#f43f5e]";
+                logConsole(`Server Connection Error (${getBackendUrl()}). Ensure Python server is running.`, "error");
+            } finally {
+                syncIcon.classList.remove('animate-spin');
+            }
+        }
+
+        // Switch Dashboard Tabs
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.nav-tab').forEach(el => {
+                el.classList.remove('bg-rose-500/10', 'text-rose-400', 'border-rose-500/30');
+                el.classList.add('text-zinc-400', 'border-transparent');
+            });
+
+            document.getElementById(tabId).classList.remove('hidden');
+            const activeBtn = document.getElementById(`tab-${tabId}`);
+            activeBtn.classList.remove('text-zinc-400', 'border-transparent');
+            activeBtn.classList.add('bg-rose-500/10', 'text-rose-400', 'border-rose-500/30');
+        }
+
+        // Send SCAN command to Python Backend
+        async function triggerHardwareScan() {
+            const btn = document.getElementById('scanBtn');
+            const laser = document.getElementById('scanLaser');
+            const fingerGraphic = document.getElementById('fingerGraphic');
+            const statusBadge = document.getElementById('scanStatusBadge');
+
+            btn.disabled = true;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Scanning Fingerprint...`;
+            laser.classList.remove('hidden');
+            fingerGraphic.className = "w-28 h-28 text-rose-500 transition-all duration-500 drop-shadow-[0_0_15px_rgba(244,63,94,0.6)]";
+            statusBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span> WAITING FOR FINGER`;
+            lucide.createIcons();
+
+            logConsole("TX > Sending POST /api/scan command...", "tx");
+
+            try {
+                const response = await fetch(`${getBackendUrl()}/api/scan`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.status === "found") {
+                    logConsole(`RX > ID Match Found: #${data.id}`, "rx");
+                    renderPatientView(data.id, data.patient);
+                    addScanHistory(data.id, true, data.patient ? data.patient.name : "Unknown");
+                } else if (data.status === "no_match") {
+                    logConsole("RX > Fingerprint match not found on ESP32", "rx");
+                    renderNoMatchView();
+                    addScanHistory(null, false);
+                } else {
+                    logConsole(`RX > Scan response: ${JSON.stringify(data)}`, "rx");
+                    renderNoMatchView();
+                }
+            } catch (err) {
+                logConsole(`Scan Exception: ${err.message}`, "error");
+                alert("Failed to communicate with Python server. Check backend connection.");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i data-lucide="scan" class="w-4 h-4"></i> Scan Fingerprint`;
+                laser.classList.add('hidden');
+                fingerGraphic.className = "w-28 h-28 text-black-700 transition-all duration-500";
+                statusBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-zinc-600"></span> IDLE`;
+                lucide.createIcons();
+            }
+        }
+
+        // Render Active Patient Data Card
+        function renderPatientView(id, p) {
+            document.getElementById('patientPlaceholder').classList.add('hidden');
+            document.getElementById('patientDataView').classList.remove('hidden');
+
+            document.getElementById('pIdBadge').innerText = `ID #${id}`;
+            document.getElementById('pName').innerText = p ? p.name : 'No Record Linked';
+            document.getElementById('pAge').innerText = p ? p.age : '--';
+            document.getElementById('pBloodGroup').innerText = p ? p.blood_group : '--';
+            document.getElementById('pAllergies').innerText = p ? p.allergies : 'None';
+            document.getElementById('pConditions').innerText = p ? p.conditions : 'None';
+            document.getElementById('pMedications').innerText = p ? p.medications : 'None';
+            document.getElementById('pSurgeries').innerText = p ? p.surgeries : 'None';
+            document.getElementById('pContact').innerText = p ? p.emergency_contact : '--';
+            document.getElementById('pCallBtn').href = p ? `tel:${p.emergency_contact}` : '#';
+        }
+
+        function renderNoMatchView() {
+            document.getElementById('patientDataView').classList.add('hidden');
+            const ph = document.getElementById('patientPlaceholder');
+            ph.classList.remove('hidden');
+            ph.innerHTML = `
+                <div class="p-4 bg-rose-950/30 rounded-2xl border border-rose-900/40 text-rose-500">
+                    <i data-lucide="user-x" class="w-10 h-10 stroke-[1.5]"></i>
+                </div>
+                <h3 class="text-rose-400 font-bold text-base">Fingerprint Unrecognized</h3>
+                <p class="text-zinc-500 text-xs max-w-xs">No template match was found on the ESP32 optical sensor.</p>
+            `;
+            lucide.createIcons();
+        }
+
+        // Fetch All Records from Server
+        async function fetchPatientsList() {
+            try {
+                const res = await fetch(`${getBackendUrl()}/api/patients`);
+                if (res.ok) {
+                    patientDatabase = await res.json();
+                    renderTable();
+                }
+            } catch (err) {
+                console.error("Failed to fetch patients list", err);
+            }
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('patientTableBody');
+            tbody.innerHTML = '';
+            Object.keys(patientDatabase).forEach(id => {
+                const p = patientDatabase[id];
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-black-850/50 transition-colors";
+                tr.innerHTML = `
+                    <td class="px-6 py-3.5 font-mono text-rose-400 font-semibold">#${id}</td>
+                    <td class="px-6 py-3.5 font-semibold text-white">${p.name} <span class="text-zinc-500 text-xs font-normal">(${p.age})</span></td>
+                    <td class="px-6 py-3.5 font-bold text-rose-300 font-mono">${p.blood_group}</td>
+                    <td class="px-6 py-3.5 text-rose-400 font-medium">${p.allergies}</td>
+                    <td class="px-6 py-3.5">${p.conditions}</td>
+                    <td class="px-6 py-3.5 font-mono">${p.emergency_contact}</td>
+                    <td class="px-6 py-3.5 text-right">
+                        <button onclick="inspectPatient(${id})" class="px-2.5 py-1 bg-black-800 hover:bg-black-700 text-rose-400 rounded-lg text-xs font-mono">View</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function inspectPatient(id) {
+            switchTab('scanTab');
+            renderPatientView(id, patientDatabase[id]);
+        }
+
+        function filterRecords() {
+            const q = document.getElementById('searchBox').value.toLowerCase();
+            document.querySelectorAll('#patientTableBody tr').forEach(row => {
+                row.style.display = row.innerText.toLowerCase().includes(q) ? '' : 'none';
+            });
+        }
+
+        // Enrollment Handler
+        async function submitEnrollment(e) {
+            e.preventDefault();
+            const btn = document.getElementById('enrollBtn');
+            btn.disabled = true;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Enrolling on ESP32...`;
+            lucide.createIcons();
+
+            const fid = parseInt(document.getElementById('enrollId').value);
+            const payload = {
+                id: fid,
+                patient: {
+                    name: document.getElementById('enrollName').value,
+                    age: parseInt(document.getElementById('enrollAge').value),
+                    blood_group: document.getElementById('enrollBlood').value,
+                    allergies: document.getElementById('enrollAllergies').value || 'None',
+                    conditions: document.getElementById('enrollConditions').value || 'None',
+                    surgeries: document.getElementById('enrollSurgeries').value || 'None',
+                    medications: document.getElementById('enrollMedications').value || 'None',
+                    emergency_contact: document.getElementById('enrollContact').value
+                }
+            };
+
+            try {
+                const res = await fetch(`${getBackendUrl()}/api/enroll`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+                if (res.ok && data.status === 'success') {
+                    alert(`✓ Fingerprint ID #${fid} successfully enrolled on ESP32!`);
+                    fetchPatientsList();
+                    switchTab('databaseTab');
+                } else {
+                    alert(`❌ Enrollment failed: ${data.status || 'Sensor Timeout'}`);
+                }
+            } catch (err) {
+                alert(`Error connecting to Python backend: ${err.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i data-lucide="fingerprint" class="w-4 h-4"></i> Send Enrollment Command to ESP32`;
+                lucide.createIcons();
+            }
+        }
+
+        // Logging & History Utils
+        function addScanHistory(id, success, name = "Unknown") {
+            const list = document.getElementById('scanHistoryList');
+            if (list.querySelector('.italic')) list.innerHTML = '';
+            const timeStr = new Date().toLocaleTimeString();
+            const item = document.createElement('div');
+            item.className = "flex items-center justify-between p-2 rounded-xl bg-black-950 border border-black-850";
+            item.innerHTML = success 
+                ? `<span class="text-emerald-400 font-bold">✓ ${name} <span class="text-zinc-500 font-normal">(#${id})</span></span><span class="text-[10px] text-zinc-600">${timeStr}</span>`
+                : `<span class="text-rose-500 font-bold">❌ Unrecognized Scan</span><span class="text-[10px] text-zinc-600">${timeStr}</span>`;
+            list.prepend(item);
+        }
+
+        function logConsole(msg, type = "info") {
+            const consoleEl = document.getElementById('consoleLog');
+            const line = document.createElement('div');
+            const timeStr = new Date().toLocaleTimeString();
+
+            if (type === 'tx') line.className = "text-rose-400 font-semibold";
+            else if (type === 'rx') line.className = "text-emerald-400 font-semibold";
+            else if (type === 'error') line.className = "text-rose-500 font-bold";
+            else if (type === 'success') line.className = "text-teal-400 font-medium";
+            else line.className = "text-zinc-400";
+
+            line.innerText = `[${timeStr}] ${msg}`;
+            consoleEl.appendChild(line);
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+        }
+
+        function clearConsole() {
+            document.getElementById('consoleLog').innerHTML = '';
+        }
+
+        function toggleBackendCodeModal() {
+            document.getElementById('codeModal').classList.toggle('hidden');
+        }
+
+        function copyPythonCode() {
+            const code = document.getElementById('pythonSourceCode').innerText;
+            navigator.clipboard.writeText(code);
+            alert("Python Flask script copied to clipboard!");
+        }
+    </script>
+</body>
+</html>
